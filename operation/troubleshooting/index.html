@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
+        
+        
+        <link rel="shortcut icon" href="../../img/favicon.ico">
+
+	<title>Troubleshooting - Zonza Platform</title>
+
+        <link href="../../css/bootstrap-custom.min.css" rel="stylesheet">
+        <link href="../../css/font-awesome-4.0.3.css" rel="stylesheet">
+        <link rel="stylesheet" href="../../css/highlight.css">
+        <link href="../../css/base.css" rel="stylesheet">
+
+        <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+        <!--[if lt IE 9]>
+            <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+            <script src="https://oss.maxcdn.com/libs/respond.js/1.3.0/respond.min.js"></script>
+        <![endif]-->
+
+        
+    </head>
+
+    <body>
+
+        <div class="navbar navbar-default navbar-fixed-top" role="navigation">
+    <div class="container">
+
+        <!-- Collapsed navigation -->
+        <div class="navbar-header">
+            <!-- Expander button -->
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+
+            <!-- Main title -->
+            <a class="navbar-brand" href="../../index.html">Zonza Platform</a>
+        </div>
+
+        <!-- Expanded navigation -->
+        <div class="navbar-collapse collapse">
+            <!-- Main navigation -->
+            <ul class="nav navbar-nav">
+            
+            
+                <li >
+                    <a href="../../index.html">Home</a>
+                </li>
+            
+            
+            
+                <li class="dropdown active">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown">Operation <b class="caret"></b></a>
+                    <ul class="dropdown-menu">
+                    
+                        
+<li >
+    <a href="../building_a_stack/index.html">Building a Stack</a>
+</li>
+
+                    
+                        
+<li >
+    <a href="../retired_instance/index.html">AWS Retired Instance</a>
+</li>
+
+                    
+                        
+<li class="active">
+    <a href="index.html">Troubleshooting</a>
+</li>
+
+                    
+                        
+<li >
+    <a href="../tips/index.html">Tips</a>
+</li>
+
+                    
+                    </ul>
+                </li>
+            
+            
+            </ul>
+
+            <!-- Search, Navigation and Repo links -->
+            <ul class="nav navbar-nav navbar-right">
+                <li>
+                    <a href="#" data-toggle="modal" data-target="#mkdocs_search_modal">
+                        <i class="fa fa-search"></i> Search
+                    </a>
+                </li>
+                <li >
+                    <a rel="next" href="../retired_instance/index.html">
+                        <i class="fa fa-arrow-left"></i> Previous
+                    </a>
+                </li>
+                <li >
+                    <a rel="prev" href="../tips/index.html">
+                        Next <i class="fa fa-arrow-right"></i>
+                    </a>
+                </li>
+                
+            </ul>
+        </div>
+    </div>
+</div>
+
+        <div class="container">
+            <div class="col-md-3"><div class="bs-sidebar hidden-print affix well" role="complementary">
+    <ul class="nav bs-sidenav">
+    
+        <li class="main active"><a href="#troubleshooting">Troubleshooting</a></li>
+        
+            <li><a href="#problem-waps-fail-to-mount-nfs-shares-on-restart">Problem: WAP(s) fail to mount NFS shares on restart</a></li>
+        
+            <li><a href="#problem-ec2-instances-stop-when-aws-retires-their-hardware">Problem: EC2 instances stop when AWS retires their hardware</a></li>
+        
+    
+    </ul>
+</div></div>
+            <div class="col-md-9" role="main">
+
+<h1 id="troubleshooting">Troubleshooting</h1>
+<h2 id="problem-waps-fail-to-mount-nfs-shares-on-restart">Problem: WAP(s) fail to mount NFS shares on restart</h2>
+<h3 id="symptom">Symptom</h3>
+<p>Intermittent errors in ingest processing.</p>
+<h3 id="cause">Cause</h3>
+<p>This problem is caused by a WAP failing to mount NFS shares following a restart.
+Some ingests may continue to work, however, if they are routed through fully functioning WAPs by the load balancer.</p>
+<p>One scenario in which this can occur is when an EC2 instance is retired.  In such a case it is necessary to start the instance again, which moves it onto new hardware and re-attaches to the original Elastic Block Storage (EBS) device.  The problem can occur at this stage when the NFS mounts may not be correctly re-established.</p>
+<h3 id="issue-tracking">Issue Tracking</h3>
+<p>This has been reported as a bug - JIRA Issue ().</p>
+<p>A proper fix to this issue is to have the system automatically correct this issue itself.  Also, a WAP, while in such a failed, or unready state should not be available for processing transactions.</p>
+<h3 id="diagnostics">Diagnostics</h3>
+<p>To diagnose this problem you can do one of the following:</p>
+<pre><code>arthurcrawford@zonza4-art-testing-po-wap01:~$ mount
+arthurcrawford@zonza4-art-testing-po-wap01:~$ cat /etc/mtab
+</code></pre>
+<p>In either case, a healthy WAP will show something like the following mount points in the list.</p>
+<pre><code class="bash">...
+zonza4-art-testing-po-nfs01.eu-west-1.zonza-dev.aws.zonza.zone:/share/wappshare /opt/hogarth/shared nfs4 rw,addr=172.29.194.205,clientaddr=172.29.193.163,_netdev 0 0
+zonza4-art-testing-po-nfs01.eu-west-1.zonza-dev.aws.zonza.zone:/share/ingest /opt/vidispine/ingest nfs4 rw,addr=172.29.194.205,clientaddr=172.29.193.163,_netdev 0 0
+...
+</code></pre>
+
+<p>The important things to note are the following mounts from the NFS server.</p>
+<pre><code>/share/wappshare /opt/hogarth/shared
+/share/ingest /opt/vidispine/ingest
+</code></pre>
+<p>If you do not see the mount points there is a problem.  These are shared between the cluster of WAPs.</p>
+<p>Further diagnose the issue by checking the log for the <code>mountall</code> process run at startup by the <code>upstart</code> init process.</p>
+<pre><code class="bash">$ sudo cat /var/log/upstart/mountall.log
+mountall: Disconnected from Plymouth
+mount.nfs: Connection timed out
+mount.nfs: Connection timed out
+mountall: mount /opt/hogarth/shared [992] terminated with status 32
+mountall: mount /opt/vidispine/ingest [994] terminated with status 32
+</code></pre>
+
+<p>Note in the above log how the <code>mount</code> timed out and the mount points failed indicating the problem.</p>
+<p>You can also check the status of the <code>mountall</code> <code>upstart</code> job using one of the following commands:</p>
+<pre><code>$ initctl status mountall
+mountall stop/waiting
+
+$ sudo service mountall status
+mountall stop/waiting
+</code></pre>
+<p>The <code>mountall</code> process should not be running - it should be in the stop/waiting state as shown above.  If it is running, you will see a process ID instead - that indicates a problem occurred and the <code>mountall</code> process did not complete successfully.</p>
+<h3 id="operational-workaround">Operational Workaround</h3>
+<p>Restart the <code>mountall</code> job on the failing WAP.</p>
+<pre><code>zpl-522-wap04:~$ sudo service mountall restart
+mountall stop/waiting
+mountall stop/waiting
+</code></pre>
+<p>That should restore the mounts correctly (check in <code>/etc/mtab</code>).  You should also check again the status of the <code>mountall</code> process.  Validate that it is now in the <code>stop/waiting</code> state.</p>
+<pre><code>$ sudo service mountall status
+mountall stop/waiting
+</code></pre>
+<h2 id="problem-ec2-instances-stop-when-aws-retires-their-hardware">Problem: EC2 instances stop when AWS retires their hardware</h2>
+<h3 id="symptom_1">Symptom</h3>
+<p>A number of possible types of degradation of service.</p>
+<h3 id="cause_1">Cause</h3>
+<p>An EC2 instance or instances have been stopped by AWS.</p>
+<p>AWS will notifiy of instances that will be retired.</p>
+<p>The reasons for retirement include redundant hardware.  AWS will stop these instances according to the notified schedule.</p>
+<p>See the <a href="http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-retirement.html">full details</a> of what happens when instances are retired in the AWS documentation.</p>
+<p>In summary, if the root device type of the instance is EBS, the following instructions apply.</p>
+<blockquote>
+<p>Wait for the scheduled retirement date - when the instance is stopped - or stop the instance yourself before the retirement date. You can start the instance again at any time. For more information about stopping and starting your instance, and what to expect when your instance is stopped, such as the effect on public, private and Elastic IP addresses associated with your instance, see Stop and Start Your Instance.</p>
+</blockquote>
+<h3 id="issue-tracking_1">Issue Tracking</h3>
+<p>Tracked by JIRA Issue ().</p>
+<p>The desirable fix is that stopped instances are detected and restarted automatically.</p>
+<h3 id="diagnostics_1">Diagnostics</h3>
+<p>AWS console</p>
+<p>AWS CLI</p>
+<h3 id="operational-workaround_1">Operational Workaround</h3>
+<p>Restart the instance</p>
+<ul>
+<li>AWS console</li>
+<li>AWS CLI</li>
+</ul></div>
+        </div>
+
+        <footer class="col-md-12">
+            <hr>
+            
+            <center>Documentation built with <a href="http://www.mkdocs.org/">MkDocs</a>.</center>
+        </footer>
+
+        <script src="../../js/jquery-1.10.2.min.js"></script>
+        <script src="../../js/bootstrap-3.0.3.min.js"></script>
+        <script src="../../js/highlight.pack.js"></script>
+        <script>var base_url = '../..';</script>
+        <script data-main="../../mkdocs/js/search.js" src="../../mkdocs/js/require.js"></script>
+        <script src="../../js/base.js"></script>
+
+        <div class="modal" id="mkdocs_search_modal" tabindex="-1" role="dialog" aria-labelledby="Search Modal" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                        <h4 class="modal-title" id="exampleModalLabel">Search</h4>
+                    </div>
+                    <div class="modal-body">
+                        <p>
+                            From here you can search these documents. Enter
+                            your search terms below.
+                        </p>
+                        <form role="form">
+                            <div class="form-group">
+                                <input type="text" class="form-control" placeholder="Search..." id="mkdocs-search-query">
+                            </div>
+                        </form>
+                        <div id="mkdocs-search-results"></div>
+                    </div>
+                    <div class="modal-footer">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

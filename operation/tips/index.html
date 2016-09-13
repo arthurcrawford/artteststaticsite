@@ -7,14 +7,14 @@
         
         
         
-        <link rel="shortcut icon" href="./img/favicon.ico">
+        <link rel="shortcut icon" href="../../img/favicon.ico">
 
-	<title>Zonza Platform</title>
+	<title>Tips - Zonza Platform</title>
 
-        <link href="./css/bootstrap-custom.min.css" rel="stylesheet">
-        <link href="./css/font-awesome-4.0.3.css" rel="stylesheet">
-        <link rel="stylesheet" href="./css/highlight.css">
-        <link href="./css/base.css" rel="stylesheet">
+        <link href="../../css/bootstrap-custom.min.css" rel="stylesheet">
+        <link href="../../css/font-awesome-4.0.3.css" rel="stylesheet">
+        <link rel="stylesheet" href="../../css/highlight.css">
+        <link href="../../css/base.css" rel="stylesheet">
 
         <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
         <!--[if lt IE 9]>
@@ -41,7 +41,7 @@
             </button>
 
             <!-- Main title -->
-            <a class="navbar-brand" href="index.html">Zonza Platform</a>
+            <a class="navbar-brand" href="../../index.html">Zonza Platform</a>
         </div>
 
         <!-- Expanded navigation -->
@@ -50,37 +50,37 @@
             <ul class="nav navbar-nav">
             
             
-                <li class="active">
-                    <a href="index.html">Home</a>
+                <li >
+                    <a href="../../index.html">Home</a>
                 </li>
             
             
             
-                <li class="dropdown">
+                <li class="dropdown active">
                     <a href="#" class="dropdown-toggle" data-toggle="dropdown">Operation <b class="caret"></b></a>
                     <ul class="dropdown-menu">
                     
                         
 <li >
-    <a href="operation/building_a_stack/index.html">Building a Stack</a>
+    <a href="../building_a_stack/index.html">Building a Stack</a>
 </li>
 
                     
                         
 <li >
-    <a href="operation/retired_instance/index.html">AWS Retired Instance</a>
+    <a href="../retired_instance/index.html">AWS Retired Instance</a>
 </li>
 
                     
                         
 <li >
-    <a href="operation/troubleshooting/index.html">Troubleshooting</a>
+    <a href="../troubleshooting/index.html">Troubleshooting</a>
 </li>
 
                     
                         
-<li >
-    <a href="operation/tips/index.html">Tips</a>
+<li class="active">
+    <a href="index.html">Tips</a>
 </li>
 
                     
@@ -97,13 +97,13 @@
                         <i class="fa fa-search"></i> Search
                     </a>
                 </li>
-                <li class="disabled">
-                    <a rel="next" >
+                <li >
+                    <a rel="next" href="../troubleshooting/index.html">
                         <i class="fa fa-arrow-left"></i> Previous
                     </a>
                 </li>
-                <li >
-                    <a rel="prev" href="operation/building_a_stack/index.html">
+                <li class="disabled">
+                    <a rel="prev" >
                         Next <i class="fa fa-arrow-right"></i>
                     </a>
                 </li>
@@ -117,23 +117,52 @@
             <div class="col-md-3"><div class="bs-sidebar hidden-print affix well" role="complementary">
     <ul class="nav bs-sidenav">
     
-        <li class="main active"><a href="#the-zonza-platform">The Zonza Platform</a></li>
+        <li class="main active"><a href="#tips">Tips</a></li>
         
-            <li><a href="#audience">Audience</a></li>
-        
-            <li><a href="#differences-from-wiki">Differences from Wiki</a></li>
+            <li><a href="#ssh-jump-to-control-box-via-bastion-in-one-step">SSH Jump to Control box via Bastion in one step</a></li>
         
     
     </ul>
 </div></div>
             <div class="col-md-9" role="main">
 
-<h1 id="the-zonza-platform">The Zonza Platform</h1>
-<p>This is the technical documentation starting point for the Zonza platform and its brethren.</p>
-<h2 id="audience">Audience</h2>
-<p>The intended audience is anyone involved in the delivery and maintenance of this family of platforms.</p>
-<h2 id="differences-from-wiki">Differences from Wiki</h2>
-<p>This documentation reflects the state of play today.  If it doesn't its a bug.  This documentation is subject to the same release lifecycle as the software systems it describes.  Unlike Wiki usage, there is no attempt to capture history, collaborative input or discuss future possibilities.</p></div>
+<h1 id="tips">Tips</h1>
+<h2 id="ssh-jump-to-control-box-via-bastion-in-one-step">SSH Jump to Control box via Bastion in one step</h2>
+<p>Here's one way - not perfect but it works.</p>
+<p>Add something like this to your <code>~/.ssh/config</code> file.</p>
+<pre><code class="bash">...
+Host bastion.eu-west-1.zonza-*
+  HostName %h.aws.zonza.tv
+  User arthurcrawford
+  PreferredAuthentications publickey
+  IdentityFile ~/.ssh/aws.hogarthww.com/id_rsa
+  IdentitiesOnly yes
+  ForwardAgent yes
+Host zonza-*
+  ProxyCommand ssh -q bastion.eu-west-1.%h nc zonza-eu-west-1-control01.eu-west-1.%h.aws.zonza.zone 22
+  User arthurcrawford
+  PreferredAuthentications publickey
+  IdentityFile ~/.ssh/aws.hogarthww.com/id_rsa
+  IdentitiesOnly yes
+  ForwardAgent yes
+...
+</code></pre>
+
+<p><em>[Note: later versions of OpenSSH &gt; 7.3 allow this to be done more directly using the <code>ProxyJump</code> command.]</em></p>
+<p><em>[Tip: as shown here, it's a good idea to use a separate SSH identity for the purpose of accessing AWS accounts - it's better not to use the same identity for accessing everything in case this private key is compromised.]</em></p>
+<p>To complement the above SSH config, provide a handy set of aliases in your <code>bash</code> shell profile.</p>
+<pre><code class="bash">alias zpl-prd='ssh zonza-prd'
+alias zpl-test='ssh zonza-test'
+alias zpl-dev='ssh zonza-dev'
+</code></pre>
+
+<p>As an example, typing <code>zpl-prd</code> in the shell is an alias for <code>ssh zonza-prd</code> which is matched by the lower block of SSH config. This establishes the SSH connection to the matching bastion host by expanding <code>%h</code> to <code>zonza-prd</code> to complete the fully qualified name of the appropriate bastion host for PROD.  The connection is then proxied to the appropriate control box using <code>nc</code> (<code>netcat</code>), again using the <code>%h</code> placeholder to complete the fully qualified name of the PROD control box.</p>
+<p><strong>Example:</strong></p>
+<pre><code class="bash">art@MyMac:~/$ zpl-prd
+...
+Last login: Tue Aug 30 16:00:25 2016 from zonza-eu-west-1-bastion01.eu-west-1.zonza-prd.aws.zonza.zone
+arthurcrawford@zonza-eu-west-1-control01:~$
+</code></pre></div>
         </div>
 
         <footer class="col-md-12">
@@ -142,12 +171,12 @@
             <center>Documentation built with <a href="http://www.mkdocs.org/">MkDocs</a>.</center>
         </footer>
 
-        <script src="./js/jquery-1.10.2.min.js"></script>
-        <script src="./js/bootstrap-3.0.3.min.js"></script>
-        <script src="./js/highlight.pack.js"></script>
-        <script>var base_url = '.';</script>
-        <script data-main="./mkdocs/js/search.js" src="./mkdocs/js/require.js"></script>
-        <script src="./js/base.js"></script>
+        <script src="../../js/jquery-1.10.2.min.js"></script>
+        <script src="../../js/bootstrap-3.0.3.min.js"></script>
+        <script src="../../js/highlight.pack.js"></script>
+        <script>var base_url = '../..';</script>
+        <script data-main="../../mkdocs/js/search.js" src="../../mkdocs/js/require.js"></script>
+        <script src="../../js/base.js"></script>
 
         <div class="modal" id="mkdocs_search_modal" tabindex="-1" role="dialog" aria-labelledby="Search Modal" aria-hidden="true">
             <div class="modal-dialog">
